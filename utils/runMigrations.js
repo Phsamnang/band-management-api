@@ -10,10 +10,17 @@ let migrationPromise = null;
  */
 async function tableExists(tableName) {
     try {
+        // First, test the connection
+        await db.sequelize.authenticate();
         const queryInterface = db.sequelize.getQueryInterface();
         const tables = await queryInterface.showAllTables();
         return tables.includes(tableName);
     } catch (error) {
+        console.error('Database connection error in tableExists:', error.message);
+        // Re-throw connection errors so they can be handled properly
+        if (error.message.includes('password') || error.message.includes('authentication')) {
+            throw error;
+        }
         return false;
     }
 }
@@ -36,6 +43,17 @@ async function runMigrations() {
     // Start migration process
     migrationPromise = (async () => {
         try {
+            console.log('Checking database connection...');
+            
+            // First, test the database connection
+            try {
+                await db.sequelize.authenticate();
+                console.log('Database connection established successfully');
+            } catch (authError) {
+                console.error('Database authentication failed:', authError.message);
+                throw new Error(`Database connection failed: ${authError.message}. Please check your DATABASE_URL environment variable.`);
+            }
+            
             console.log('Checking if database tables exist...');
             
             // Check if Users table exists (first migration)

@@ -135,6 +135,17 @@ npx sequelize-cli db:migrate
   - Clearing Vercel build cache
   - Redeploying the project
   - Verifying `package.json` is committed to your repository
+- **Error: "SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string"**: This occurs when the password in your `DATABASE_URL` is missing, undefined, or improperly formatted. To fix:
+  1. Check your `DATABASE_URL` in Vercel environment variables
+  2. Ensure the format is: `postgresql://username:password@host:port/database`
+  3. If your password contains special characters (like `@`, `:`, `/`, `#`, etc.), you must URL-encode them:
+     - `@` becomes `%40`
+     - `:` becomes `%3A`
+     - `/` becomes `%2F`
+     - `#` becomes `%23`
+     - Space becomes `%20` or `+`
+  4. Example: If password is `p@ssw:rd`, use `p%40ssw%3Ard` in the URL
+  5. Verify the password is not empty in your database connection string
 
 ### Migration Errors
 - Ensure migrations are run before deployment
