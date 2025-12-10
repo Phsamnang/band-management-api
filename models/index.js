@@ -21,11 +21,13 @@ if (config.use_env_variable) {
   }
   
   // Remove jdbc: prefix if present (for compatibility)
-  let cleanUrl = databaseUrl.replace(/^jdbc:/, '');
+  const cleanUrl = databaseUrl.replace(/^jdbc:/, '');
   
-  // Validate and fix URL format
+  // Parse URL and extract connection parameters explicitly
+  // This ensures password is always a string, not undefined
   try {
     const url = new URL(cleanUrl);
+    
     if (!url.protocol || !url.hostname) {
       throw new Error('Invalid DATABASE_URL: missing protocol or hostname');
     }
@@ -33,12 +35,34 @@ if (config.use_env_variable) {
       throw new Error('Invalid DATABASE_URL: missing username');
     }
     
-    // Ensure password is a string (empty string if missing, not null/undefined)
-    // If password is missing from URL, Sequelize will pass undefined which causes the error
-    // Reconstruct URL to ensure password is always a string
-    const password = url.password || '';
-    const auth = password ? `${url.username}:${password}` : url.username;
-    cleanUrl = `${url.protocol}//${auth}@${url.host}${url.pathname}${url.search}`;
+    // Extract database name (remove leading slash)
+    const database = url.pathname ? url.pathname.slice(1) : '';
+    if (!database) {
+      throw new Error('Invalid DATABASE_URL: missing database name');
+    }
+    
+    // Extract port (default to 5432 for PostgreSQL)
+    const port = url.port ? parseInt(url.port, 10) : 5432;
+    
+    // Ensure password is always a string (empty string if missing, never undefined/null)
+    // This is critical - pg driver requires password to be a string
+    const password = url.password !== null && url.password !== undefined ? String(url.password) : '';
+    
+    // Use explicit connection parameters instead of connection string
+    // This ensures password is always passed as a string
+    sequelize = new Sequelize(database, url.username, password, {
+      host: url.hostname,
+      port: port,
+      dialect: config.dialect || 'postgres',
+      dialectOptions: config.dialectOptions || {},
+      logging: config.logging || false,
+      pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+      }
+    });
     
   } catch (urlError) {
     if (urlError.code === 'ERR_INVALID_URL') {
@@ -46,18 +70,6 @@ if (config.use_env_variable) {
     }
     throw urlError;
   }
-  
-  sequelize = new Sequelize(cleanUrl, {
-    dialect: config.dialect || 'postgres',
-    dialectOptions: config.dialectOptions || {},
-    logging: config.logging || false,
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
-    }
-  });
 } else {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
