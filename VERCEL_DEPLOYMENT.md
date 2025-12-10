@@ -126,6 +126,10 @@ You can create a temporary admin endpoint to run migrations, then remove it afte
 - Ensure SSL is enabled in your database
 - Check database firewall settings
 - **Error: "The dialect jdbc is not supported"**: This occurs if your `DATABASE_URL` has a `jdbc:` prefix. The code now automatically removes this prefix, but ensure your `DATABASE_URL` format is: `postgresql://username:password@host:port/database` (not `jdbc:postgresql://...`)
+- **Error: "Please install pg package manually"**: This occurs when the `pg` (PostgreSQL driver) package isn't installed. Ensure `pg` is in your `package.json` dependencies (it should be: `"pg": "^8.16.3"`). The code now explicitly requires `pg` to ensure it's loaded. If the error persists, try:
+  - Clearing Vercel build cache
+  - Redeploying the project
+  - Verifying `package.json` is committed to your repository
 
 ### Migration Errors
 - Ensure migrations are run before deployment

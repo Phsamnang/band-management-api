@@ -1,5 +1,8 @@
 'use strict';
 
+// Explicitly require pg to ensure it's available for Sequelize
+require('pg');
+
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
