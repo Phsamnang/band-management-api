@@ -17,7 +17,19 @@ Set these in your Vercel project settings:
 DATABASE_URL=postgresql://username:password@host:port/database?sslmode=require
 ```
 
-**Important:** Your database URL must include SSL parameters for production.
+**Important:** 
+- Your database URL must include SSL parameters for production
+- **Format must be:** `postgresql://username:password@host:port/database`
+- **All parts are required:** username, password (even if empty), host, port, and database name
+- If your password contains special characters, URL-encode them:
+  - `@` → `%40`, `:` → `%3A`, `/` → `%2F`, `#` → `%23`, space → `%20`
+
+**Example valid formats:**
+```
+postgresql://user:password@host.example.com:5432/mydb?sslmode=require
+postgresql://user:password123@db.example.com:5432/booking_db
+postgresql://user:p%40ssw%3Ard@host:5432/db  (password: p@ssw:rd)
+```
 
 ### 2. Authentication
 ```
@@ -146,6 +158,18 @@ npx sequelize-cli db:migrate
      - Space becomes `%20` or `+`
   4. Example: If password is `p@ssw:rd`, use `p%40ssw%3Ard` in the URL
   5. Verify the password is not empty in your database connection string
+
+- **Error: "Invalid DATABASE_URL: missing username"**: This occurs when your `DATABASE_URL` is malformed or missing the username. To fix:
+  1. Go to Vercel Dashboard → Your Project → Settings → Environment Variables
+  2. Check your `DATABASE_URL` value
+  3. Ensure it follows the format: `postgresql://username:password@host:port/database`
+  4. **Common issues:**
+     - Missing `://` after `postgresql`
+     - Missing `@` between credentials and host
+     - Missing `:` between username and password (use `username:@host` if no password)
+     - Extra spaces or line breaks in the URL
+  5. **Test your URL format:** The URL should look like: `postgresql://myuser:mypass@db.example.com:5432/mydb`
+  6. If using Vercel Postgres, copy the connection string directly from the Vercel Postgres dashboard
 
 ### Migration Errors
 - Ensure migrations are run before deployment
