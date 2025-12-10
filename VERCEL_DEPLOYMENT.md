@@ -61,11 +61,18 @@ git push origin main
    - `JWT_SECRET` - Your JWT secret key
    - `NODE_ENV` - Set to `production`
 
-### Step 4: Run Database Migrations
+### Step 4: Database Tables (Auto-Created)
 
-Before your first deployment, you need to run database migrations:
+**Good News!** Tables are now automatically created on first request when deploying to Vercel. The system will:
 
-**Option A: Using Vercel CLI (Recommended)**
+1. Check if database tables exist on the first API request
+2. Automatically create all tables if they don't exist
+3. Use the correct order to handle foreign key dependencies
+
+**Manual Migration (Optional)**
+If you prefer to run migrations manually before deployment:
+
+**Option A: Using Vercel CLI**
 ```bash
 # Install Vercel CLI
 npm i -g vercel
@@ -81,9 +88,6 @@ npx sequelize-cli db:migrate
 **Option B: Using a Database Management Tool**
 - Connect to your production database
 - Run the SQL migrations manually from the `migrations/` folder
-
-**Option C: Create a Migration Endpoint (Temporary)**
-You can create a temporary admin endpoint to run migrations, then remove it after first deployment.
 
 ### Step 5: Deploy
 
@@ -106,9 +110,10 @@ You can create a temporary admin endpoint to run migrations, then remove it afte
 ## Important Notes
 
 ### Database Migrations
-- **Never use `sync()` in production** - Always use migrations
-- Run migrations before first deployment
-- Use `npx sequelize-cli db:migrate` to apply migrations
+- **Auto-creation enabled**: Tables are automatically created on first request in Vercel
+- The system checks if tables exist and creates them if needed
+- For manual control, use `npx sequelize-cli db:migrate` before deployment
+- Tables are created in the correct order to handle foreign key dependencies
 
 ### Serverless Considerations
 - Each API request runs in a separate serverless function

@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const db = require('./models');
+const { runMigrations } = require('./utils/runMigrations');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +14,25 @@ app.use(express.urlencoded({ extended: true }));
 const userRoutes = require('./routes/userRoute');
 const bandRoutes = require('./routes/bandRoute');
 const bookingRoutes = require('./routes/bookingRoute');
+
+// Auto-run migrations on first request in serverless environment (Vercel)
+if (process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    let migrationChecked = false;
+    
+    // Middleware to run migrations on first request
+    app.use(async (req, res, next) => {
+        if (!migrationChecked) {
+            migrationChecked = true;
+            try {
+                await runMigrations();
+            } catch (error) {
+                console.error('Failed to run migrations:', error);
+                // Continue anyway - migrations might have already run
+            }
+        }
+        next();
+    });
+}
 
 app.get('/', (req, res) => {
     res.send('Welcome to the Booking Project API');
