@@ -11,7 +11,14 @@ const db = {};
 
 let sequelize;
 if (config.use_env_variable) {
-  sequelize = new Sequelize(process.env[config.use_env_variable], config);
+  const databaseUrl = process.env[config.use_env_variable];
+  // Remove jdbc: prefix if present (for compatibility)
+  const cleanUrl = databaseUrl ? databaseUrl.replace(/^jdbc:/, '') : databaseUrl;
+  sequelize = new Sequelize(cleanUrl, {
+    dialect: config.dialect || 'postgres',
+    dialectOptions: config.dialectOptions || {},
+    logging: config.logging || false
+  });
 } else {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }

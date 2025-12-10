@@ -125,6 +125,7 @@ You can create a temporary admin endpoint to run migrations, then remove it afte
 - Verify `DATABASE_URL` is correct
 - Ensure SSL is enabled in your database
 - Check database firewall settings
+- **Error: "The dialect jdbc is not supported"**: This occurs if your `DATABASE_URL` has a `jdbc:` prefix. The code now automatically removes this prefix, but ensure your `DATABASE_URL` format is: `postgresql://username:password@host:port/database` (not `jdbc:postgresql://...`)
 
 ### Migration Errors
 - Ensure migrations are run before deployment
