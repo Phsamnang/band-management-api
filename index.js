@@ -39,14 +39,58 @@ if (process.env.VERCEL !== '1' && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
         ? { alter: false } // Don't auto-sync in production
         : { alter: true };  // Allow sync in development
     
-    db.sequelize.sync(syncOptions).then(() => {
-        console.log('Database connected and synced');
-        app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
-        });
-    }).catch((err) => {
-        console.error('Failed to sync database:', err);
-    });
+    // Sync models in correct order to handle foreign key dependencies
+    // Users must be synced before Bands (which references users)
+    const syncDatabase = async () => {
+        try {
+            // Sync User first (no dependencies)
+            if (db.User) {
+                await db.User.sync(syncOptions);
+                console.log('Users table synced');
+            }
+            
+            // Then sync other independent tables
+            if (db.Client) {
+                await db.Client.sync(syncOptions);
+                console.log('Clients table synced');
+            }
+            
+            // Then sync Band (depends on User)
+            if (db.Band) {
+                await db.Band.sync(syncOptions);
+                console.log('Bands table synced');
+            }
+            
+            // Then sync Booking (depends on Band and Client)
+            if (db.Booking) {
+                await db.Booking.sync(syncOptions);
+                console.log('Bookings table synced');
+            }
+            
+            // Sync any other models
+            const otherModels = Object.keys(db).filter(key => 
+                key !== 'sequelize' && 
+                key !== 'Sequelize' && 
+                !['User', 'Client', 'Band', 'Booking'].includes(key)
+            );
+            
+            for (const modelName of otherModels) {
+                if (db[modelName] && typeof db[modelName].sync === 'function') {
+                    await db[modelName].sync(syncOptions);
+                    console.log(`${modelName} table synced`);
+                }
+            }
+            
+            console.log('Database connected and synced');
+            app.listen(PORT, () => {
+                console.log(`Server is running on port ${PORT}`);
+            });
+        } catch (err) {
+            console.error('Failed to sync database:', err);
+        }
+    };
+    
+    syncDatabase();
 }
 
 // Export app for Vercel serverless functions

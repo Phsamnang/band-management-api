@@ -70,7 +70,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: true,
             references: {
-                model: 'users',
+                model: 'Users', // Match the migration table name
                 key: 'id'
             }
         }

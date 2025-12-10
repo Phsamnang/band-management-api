@@ -33,6 +33,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'User',
+    tableName: 'Users', // Match the migration table name
     hooks: {
       beforeCreate: async (user) => {
         if (user.password) {
